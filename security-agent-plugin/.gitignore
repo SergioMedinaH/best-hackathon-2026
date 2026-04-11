@@ -1,0 +1,17 @@
+.DS_Store
+.gradle
+.idea
+.intellijPlatform
+.kotlin
+.qodana
+build
+.venv
+venv
+env
+__pycache__
+*.pyc
+*.pyo
+security-report.md
+security-report.html
+dist
+out

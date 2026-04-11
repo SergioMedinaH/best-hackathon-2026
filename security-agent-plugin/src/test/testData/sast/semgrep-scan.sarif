@@ -1,0 +1,86 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "results": [
+        {
+          "ruleId": "python.lang.security.audit.sql-injection",
+          "message": {
+            "text": "Potential SQL injection via string formatting."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "demo-vulnerable-app/app.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 48,
+                  "startColumn": 14
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "python.lang.security.audit.command-injection",
+          "message": {
+            "text": "Dangerous subprocess invocation with shell=True."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "demo-vulnerable-app/app.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 61,
+                  "startColumn": 13
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "tool": {
+        "driver": {
+          "name": "Semgrep OSS",
+          "rules": [
+            {
+              "id": "python.lang.security.audit.sql-injection",
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "shortDescription": {
+                "text": "Semgrep Finding: python.lang.security.audit.sql-injection"
+              },
+              "properties": {
+                "tags": [
+                  "CWE-89: SQL Injection",
+                  "OWASP-A03:2021 - Injection"
+                ]
+              }
+            },
+            {
+              "id": "python.lang.security.audit.command-injection",
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "shortDescription": {
+                "text": "Semgrep Finding: python.lang.security.audit.command-injection"
+              },
+              "properties": {
+                "tags": [
+                  "CWE-78: OS Command Injection"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/schemas/sarif-schema-2.1.0.json"
+}

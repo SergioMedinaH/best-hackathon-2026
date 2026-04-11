@@ -1,0 +1,37 @@
+[
+  {
+    "id": "A01:2021",
+    "name": "Broken Access Control",
+    "summary": "Authorization boundaries are not properly enforced, allowing attackers to access or manipulate resources outside their intended scope."
+  },
+  {
+    "id": "A02:2021",
+    "name": "Cryptographic Failures",
+    "summary": "Sensitive data is exposed because cryptography is missing, weak, or incorrectly applied."
+  },
+  {
+    "id": "A03:2021",
+    "name": "Injection",
+    "summary": "Untrusted input is interpreted as commands or queries by downstream components such as SQL engines, shells, or HTML renderers."
+  },
+  {
+    "id": "A05:2021",
+    "name": "Security Misconfiguration",
+    "summary": "Unsafe defaults, weak hardening, or inconsistent security settings increase exposure to attack."
+  },
+  {
+    "id": "A07:2021",
+    "name": "Identification and Authentication Failures",
+    "summary": "Authentication or credential handling is implemented in a way that enables takeover, credential leakage, or impersonation."
+  },
+  {
+    "id": "A08:2021",
+    "name": "Software and Data Integrity Failures",
+    "summary": "Code or data flows are trusted without sufficient integrity guarantees, enabling tampering or unsafe execution."
+  },
+  {
+    "id": "A10:2021",
+    "name": "Server-Side Request Forgery",
+    "summary": "Server-side requests can be steered by an attacker toward unintended internal or external targets."
+  }
+]

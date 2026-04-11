@@ -1,0 +1,29 @@
+.DS_Store
+Thumbs.db
+
+# IDE and local workspace state
+**/.idea/
+**/.intellijPlatform/
+**/.gradle/
+**/.kotlin/
+**/build/
+**/out/
+**/*.iml
+
+# Python local environments and caches
+**/.venv/
+**/venv/
+**/env/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Generated reports and local exports
+**/security-report.md
+**/security-report.html
+
+# Local Claude/Codex machine config
+.claude/
+
+# Local git backup while flattening the workspace repo
+security-agent-plugin/.git.security-agent-plugin.backup/

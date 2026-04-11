@@ -1,0 +1,47 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <id>com.hackathon.securityagent</id>
+    <name>Security Agent</name>
+    <vendor>BEST UC3M Hackathon Team</vendor>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.python</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationConfigurable
+                parentId="tools"
+                instance="com.hackathon.securityagent.settings.SecurityAgentConfigurable"
+                id="com.hackathon.securityagent.settings"
+                displayName="Security Agent"/>
+        <localInspection
+                language="Python"
+                shortName="SecurityAgentInspection"
+                displayName="Security Agent Findings"
+                groupName="Security Agent"
+                enabledByDefault="true"
+                level="WARNING"
+                implementationClass="com.hackathon.securityagent.inspection.SecurityInspection"/>
+        <toolWindow
+                id="Security Agent"
+                anchor="right"
+                factoryClass="com.hackathon.securityagent.ui.SecurityToolWindowFactory"
+                canCloseContents="false"/>
+    </extensions>
+
+    <actions>
+        <action
+                id="com.hackathon.securityagent.actions.ScanProjectAction"
+                class="com.hackathon.securityagent.actions.ScanProjectAction"
+                text="Scan Project for Security Issues"
+                description="Run Semgrep on the current project and log the findings">
+            <add-to-group group-id="ToolsMenu" anchor="first"/>
+        </action>
+        <action
+                id="com.hackathon.securityagent.actions.PingOpenAIAction"
+                class="com.hackathon.securityagent.actions.PingOpenAIAction"
+                text="Ping OpenAI"
+                description="Validate the configured OpenAI API key">
+            <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="com.hackathon.securityagent.actions.ScanProjectAction"/>
+        </action>
+    </actions>
+</idea-plugin>
