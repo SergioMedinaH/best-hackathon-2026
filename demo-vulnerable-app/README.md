@@ -22,12 +22,11 @@ JetBrains plugin during the BEST UC3M hackathon.
 
 ## Smoke-test the SAST baseline
 
-From the repo root, with `semgrep` and `bandit` on `PATH`:
+From the repo root, with `semgrep` on `PATH`:
 
 ```bash
 semgrep scan --json --config p/security-audit demo-vulnerable-app/ > findings-semgrep.json
-bandit -r demo-vulnerable-app/ -f json -o findings-bandit.json
 ```
 
-Both tools should find at least 8 issues across the file. The plugin's
-`SemgrepRunner` and `BanditRunner` are validated against this fixture.
+Semgrep should find multiple issues across the file. The plugin's
+`SemgrepRunner` and SARIF parsing flow are validated against this fixture.

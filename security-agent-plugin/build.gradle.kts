@@ -118,7 +118,7 @@ intellijPlatform {
         }
     }
 
-    // Disable until the plugin ships a Settings page — it adds ~3 min to every build.
+    // Keep disabled to avoid extra build time; the plugin already has a Settings page.
     buildSearchableOptions = false
 }
 

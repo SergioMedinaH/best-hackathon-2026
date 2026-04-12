@@ -5,8 +5,10 @@ Thumbs.db
 **/.idea/
 **/.intellijPlatform/
 **/.gradle/
+**/.gradle-user/
 **/.kotlin/
 **/build/
+**/bin/
 **/out/
 **/*.iml
 

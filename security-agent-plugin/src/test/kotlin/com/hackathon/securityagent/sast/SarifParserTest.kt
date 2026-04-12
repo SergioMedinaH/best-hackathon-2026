@@ -26,8 +26,68 @@ class SarifParserTest {
         assertTrue(sqlInjection.cweIds.contains("CWE-89: SQL Injection"))
 
         val commandInjection = findings.last()
-        assertEquals(Severity.MEDIUM, commandInjection.severity)
+        assertEquals(Severity.CRITICAL, commandInjection.severity)
         assertEquals(61, commandInjection.line)
         assertTrue(commandInjection.cweIds.contains("CWE-78: OS Command Injection"))
+    }
+
+    @Test
+    fun `classifies weak crypto findings as low severity`() {
+        val parser = SarifParser()
+        val sarif =
+            """
+            {
+              "version": "2.1.0",
+              "runs": [
+                {
+                  "results": [
+                    {
+                      "ruleId": "python.lang.security.audit.weak-hash-md5",
+                      "message": {
+                        "text": "MD5 should not be used for security-sensitive hashing."
+                      },
+                      "locations": [
+                        {
+                          "physicalLocation": {
+                            "artifactLocation": {
+                              "uri": "demo-vulnerable-app/app.py"
+                            },
+                            "region": {
+                              "startLine": 115,
+                              "startColumn": 14
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "tool": {
+                    "driver": {
+                      "name": "Semgrep OSS",
+                      "rules": [
+                        {
+                          "id": "python.lang.security.audit.weak-hash-md5",
+                          "defaultConfiguration": {
+                            "level": "warning"
+                          },
+                          "properties": {
+                            "tags": [
+                              "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+            """.trimIndent()
+        val scanRoot = Path.of("workspace-root").toAbsolutePath().normalize()
+
+        val findings = parser.parse(sarif, scanRoot)
+
+        assertEquals(1, findings.size)
+        assertEquals(Severity.LOW, findings.single().severity)
     }
 }

@@ -78,7 +78,7 @@ def restore_session():
 # ---------------------------------------------------------------------------
 @app.route("/config", methods=["POST"])
 def upload_config():
-    cfg = yaml.safe_load(request.get_data())
+    cfg = yaml.load(request.get_data(), Loader=yaml.Loader)
     return {"loaded": list(cfg.keys()) if isinstance(cfg, dict) else []}
 
 
@@ -128,7 +128,7 @@ def register():
 @app.route("/hello")
 def hello():
     name = request.args.get("name", "world")
-    return render_template("hello.html", name=name)
+    return render_template_string(f"<h1>Hello {name}</h1>")
 
 
 if __name__ == "__main__":

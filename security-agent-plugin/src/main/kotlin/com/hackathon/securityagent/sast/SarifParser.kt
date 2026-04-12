@@ -78,15 +78,18 @@ class SarifParser(
             ?: rule?.objectValue("fullDescription")?.string("text")
             ?: rule?.objectValue("shortDescription")?.string("text")
             ?: ruleId
+        val cweIds = extractCwes(rule)
 
         return Finding(
             ruleId = ruleId,
             severity = Severity.fromSarifLevel(
-                result.string("level")
+                level = result.string("level")
                     ?: rule?.objectValue("defaultConfiguration")?.string("level"),
+                ruleId = ruleId,
+                cweIds = cweIds,
             ),
             message = message.trim(),
-            cweIds = extractCwes(rule),
+            cweIds = cweIds,
             relativePath = relativeDisplayPath(scanRoot, absolutePath, uri),
             absolutePath = absolutePath,
             line = region?.int("startLine") ?: 1,
