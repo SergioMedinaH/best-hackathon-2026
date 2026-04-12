@@ -154,26 +154,30 @@ class FindingDetailPanel : JBPanel<FindingDetailPanel>(BorderLayout()) {
 
     private fun buildDetailPanel(): JBPanel<*> =
         JBPanel<JBPanel<*>>(BorderLayout(0, 12)).apply {
-            add(buildHeaderPanel(), BorderLayout.NORTH)
             add(
                 JBScrollPane(
                     JBPanel<JBPanel<*>>().apply {
                         layout = BoxLayout(this, BoxLayout.Y_AXIS)
+                        add(buildHeaderPanel())
                         add(createSection("Semgrep Message", messageArea))
                         add(createSection("Validator Rationale", rationaleArea))
                         add(createSection("Narrative Explanation", explanationArea))
                         add(createSection("Exploit Chain", exploitArea))
                         add(createSection("Proposed Fix", fixArea))
                         add(createSection("Safe Code Example", codeArea))
+                        add(chatPanel)
                     },
-                ),
+                ).apply {
+                    border = JBUI.Borders.empty()
+                    horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+                },
                 BorderLayout.CENTER,
             )
-            add(chatPanel, BorderLayout.SOUTH)
         }
 
     private fun buildHeaderPanel(): JBPanel<*> =
         JBPanel<JBPanel<*>>(BorderLayout(0, 12)).apply {
+            border = JBUI.Borders.emptyBottom(14)
             add(
                 JBPanel<JBPanel<*>>(BorderLayout(8, 0)).apply {
                     add(titleLabel, BorderLayout.CENTER)

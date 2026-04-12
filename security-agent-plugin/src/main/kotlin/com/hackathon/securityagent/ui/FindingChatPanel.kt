@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
@@ -26,12 +25,12 @@ class FindingChatPanel : JBPanel<FindingChatPanel>(BorderLayout(0, 8)) {
         isEditable = false
         lineWrap = true
         wrapStyleWord = true
+        rows = 0
         border = JBUI.Borders.compound(
             JBUI.Borders.customLine(JBColor(Color(0xD7DDE5), Color(0x4B5563))),
             JBUI.Borders.empty(8),
         )
         background = JBColor(Color(0xF7F9FC), Color(0x313335))
-        rows = 8
     }
     private val statusLabel = JBLabel("Select a finding to start the follow-up chat.")
     private val inputArea = JBTextArea().apply {
@@ -59,7 +58,7 @@ class FindingChatPanel : JBPanel<FindingChatPanel>(BorderLayout(0, 8)) {
                     },
                     BorderLayout.NORTH,
                 )
-                add(JBScrollPane(transcriptArea), BorderLayout.CENTER)
+                add(transcriptArea, BorderLayout.CENTER)
                 add(statusLabel, BorderLayout.SOUTH)
             },
             BorderLayout.CENTER,
@@ -67,7 +66,7 @@ class FindingChatPanel : JBPanel<FindingChatPanel>(BorderLayout(0, 8)) {
 
         add(
             JBPanel<JBPanel<*>>(BorderLayout(8, 0)).apply {
-                add(JBScrollPane(inputArea), BorderLayout.CENTER)
+                add(inputArea, BorderLayout.CENTER)
                 add(sendButton, BorderLayout.EAST)
             },
             BorderLayout.SOUTH,

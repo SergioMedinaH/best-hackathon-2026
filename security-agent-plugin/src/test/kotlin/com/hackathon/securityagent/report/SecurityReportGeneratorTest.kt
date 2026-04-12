@@ -15,15 +15,34 @@ class SecurityReportGeneratorTest {
         val findings = listOf(
             sampleFinding(
                 ruleId = "python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
-                severity = Severity.HIGH,
+                severity = Severity.CRITICAL,
                 line = 61,
+                relativePath = "app.py",
                 message = "shell=True allows command injection.",
+                validationStatus = ValidationStatus.CONFIRMED,
+                confidence = 95,
+                cweIds = listOf("CWE-78"),
             ),
             sampleFinding(
                 ruleId = "python.flask.security.insecure-deserialization.insecure-deserialization",
                 severity = Severity.HIGH,
                 line = 72,
+                relativePath = "auth/session.py",
                 message = "pickle.loads on request data can lead to RCE.",
+                validationStatus = ValidationStatus.NEEDS_REVIEW,
+                confidence = 84,
+                cweIds = listOf("CWE-502"),
+            ),
+            sampleFinding(
+                ruleId = "python.lang.security.audit.md5-used",
+                severity = Severity.LOW,
+                line = 115,
+                relativePath = "crypto.py",
+                message = "MD5 should not be used for password hashing.",
+                validationStatus = ValidationStatus.PENDING,
+                confidence = 41,
+                cweIds = listOf("CWE-327"),
+                fixSummary = "",
             ),
         )
 
@@ -52,6 +71,15 @@ class SecurityReportGeneratorTest {
         assertTrue(report.markdown.contains("python.flask.security.insecure-deserialization.insecure-deserialization"))
 
         assertTrue(report.html.contains("<title>Security Report - demo-vulnerable-app</title>"))
+        assertTrue(report.html.contains("Severity Distribution"))
+        assertTrue(report.html.contains("Validation Distribution"))
+        assertTrue(report.html.contains("Top CWE"))
+        assertTrue(report.html.contains("Findings by File"))
+        assertTrue(report.html.contains("Coverage Overview"))
+        assertTrue(report.html.contains("Confidence Distribution"))
+        assertTrue(report.html.contains("Projected Remediation Outcome"))
+        assertTrue(report.html.contains("Top Risks"))
+        assertTrue(report.html.contains("conic-gradient("))
         assertTrue(report.html.contains("Immediate Priorities"))
         assertTrue(report.html.contains("shell=True allows command injection."))
     }
@@ -74,22 +102,27 @@ class SecurityReportGeneratorTest {
         severity: Severity,
         line: Int,
         message: String = "A security issue was detected.",
+        relativePath: String = "app.py",
+        validationStatus: ValidationStatus = ValidationStatus.CONFIRMED,
+        confidence: Int = 95,
+        cweIds: List<String> = listOf("CWE-78"),
+        fixSummary: String = "Use a safer API and remove the dangerous shell invocation.",
     ) = Finding(
         ruleId = ruleId,
         severity = severity,
         message = message,
-        cweIds = listOf("CWE-78"),
-        relativePath = "app.py",
-        absolutePath = Path.of("C:/Users/sergi/Documents/Uni/Hackathon/demo-vulnerable-app/app.py"),
+        cweIds = cweIds,
+        relativePath = relativePath,
+        absolutePath = Path.of("C:/Users/sergi/Documents/Uni/Hackathon/demo-vulnerable-app/$relativePath"),
         line = line,
         column = 1,
-        validationStatus = ValidationStatus.CONFIRMED,
-        confidence = 95,
+        validationStatus = validationStatus,
+        confidence = confidence,
         owaspCategory = "A03:2021 - Injection",
         validationRationale = "The validator confirmed this is exploitable with attacker-controlled input.",
         narrativeExplanation = "The route uses untrusted data in a dangerous sink.",
         exploitChain = "Attacker input reaches the sink without sanitization.",
-        fixSummary = "Use a safer API and remove the dangerous shell invocation.",
+        fixSummary = fixSummary,
         safeCodeExample = "subprocess.check_output([\"ping\", \"-n\", \"1\", host], shell=False)",
     )
 }

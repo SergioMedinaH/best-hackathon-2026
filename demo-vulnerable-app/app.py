@@ -58,7 +58,7 @@ def login():
 @app.route("/ping")
 def ping():
     host = request.args.get("host", "localhost")
-    output = subprocess.check_output(f"ping -n 1 {host}", shell=True)
+output = subprocess.check_output(["ping", "-n", "1", host], shell=False)
     return output
 
 
@@ -133,5 +133,6 @@ def hello():
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
+
 
 
