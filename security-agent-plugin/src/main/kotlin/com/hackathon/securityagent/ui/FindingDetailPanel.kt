@@ -1,7 +1,5 @@
 package com.hackathon.securityagent.ui
 
-import com.hackathon.securityagent.chat.FindingChatRequestResult
-import com.hackathon.securityagent.chat.FindingChatThreadState
 import com.hackathon.securityagent.model.Finding
 import com.hackathon.securityagent.model.Severity
 import com.hackathon.securityagent.model.ValidationStatus
@@ -53,13 +51,6 @@ class FindingDetailPanel : JBPanel<FindingDetailPanel>(BorderLayout()) {
     private val exploitArea = createReadOnlyArea()
     private val fixArea = createReadOnlyArea()
     private val codeArea = createReadOnlyArea(monospaced = true)
-    private val chatPanel = FindingChatPanel()
-
-    var onSendChatMessage: ((Finding, String) -> FindingChatRequestResult)? = null
-        set(value) {
-            field = value
-            chatPanel.onSendMessage = value
-        }
 
     init {
         border = JBUI.Borders.empty(12)
@@ -69,10 +60,7 @@ class FindingDetailPanel : JBPanel<FindingDetailPanel>(BorderLayout()) {
         contentPanel.add(buildDetailPanel(), DETAIL_CARD)
     }
 
-    fun showFinding(
-        finding: Finding,
-        chatThreadState: FindingChatThreadState = FindingChatThreadState(finding.id),
-    ) {
+    fun showFinding(finding: Finding) {
         titleLabel.text = finding.ruleId
         applySeverityStyle(finding.severity)
         locationValue.text = finding.locationDisplay
@@ -88,14 +76,9 @@ class FindingDetailPanel : JBPanel<FindingDetailPanel>(BorderLayout()) {
         exploitArea.text = finding.exploitChain ?: defaultExploitChain(finding)
         fixArea.text = finding.fixSummary ?: defaultFixSummary(finding)
         codeArea.text = finding.safeCodeExample ?: defaultSafeExample(finding)
-        chatPanel.showFinding(finding, chatThreadState)
 
         resetCaretPositions()
         cardLayout.show(contentPanel, DETAIL_CARD)
-    }
-
-    fun updateChatThread(threadState: FindingChatThreadState) {
-        chatPanel.updateThread(threadState)
     }
 
     fun showState(state: SecurityScanState) {
@@ -142,7 +125,6 @@ class FindingDetailPanel : JBPanel<FindingDetailPanel>(BorderLayout()) {
 
         emptyTitleLabel.text = title
         emptyBodyLabel.text = "<html><body style='width: 320px;'>$body</body></html>"
-        chatPanel.showNoFinding()
         cardLayout.show(contentPanel, EMPTY_CARD)
     }
 
@@ -160,12 +142,11 @@ class FindingDetailPanel : JBPanel<FindingDetailPanel>(BorderLayout()) {
                         layout = BoxLayout(this, BoxLayout.Y_AXIS)
                         add(buildHeaderPanel())
                         add(createSection("Semgrep Message", messageArea))
-                        add(createSection("Validator Rationale", rationaleArea))
+                        add(createSection("Validator Report", rationaleArea))
                         add(createSection("Narrative Explanation", explanationArea))
                         add(createSection("Exploit Chain", exploitArea))
                         add(createSection("Proposed Fix", fixArea))
                         add(createSection("Safe Code Example", codeArea))
-                        add(chatPanel)
                     },
                 ).apply {
                     border = JBUI.Borders.empty()
@@ -211,7 +192,7 @@ class FindingDetailPanel : JBPanel<FindingDetailPanel>(BorderLayout()) {
             border = JBUI.Borders.emptyBottom(14)
             add(
                 JBLabel(title).apply {
-                    font = font.deriveFont(Font.BOLD)
+                    font = font.deriveFont(Font.BOLD, font.size2D + 3f)
                 },
                 BorderLayout.NORTH,
             )
@@ -300,10 +281,7 @@ class FindingDetailPanel : JBPanel<FindingDetailPanel>(BorderLayout()) {
                 isEditable = false
                 lineWrap = !monospaced
                 wrapStyleWord = !monospaced
-                border = JBUI.Borders.compound(
-                    JBUI.Borders.customLine(Color(0xD7DDE5)),
-                    JBUI.Borders.empty(8),
-                )
+                border = JBUI.Borders.empty(2, 0, 0, 0)
                 background = UIColors.sectionBackground
                 if (monospaced) {
                     font = Font(Font.MONOSPACED, Font.PLAIN, font.size)

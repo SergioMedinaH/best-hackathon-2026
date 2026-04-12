@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
@@ -58,7 +59,13 @@ class FindingChatPanel : JBPanel<FindingChatPanel>(BorderLayout(0, 8)) {
                     },
                     BorderLayout.NORTH,
                 )
-                add(transcriptArea, BorderLayout.CENTER)
+                add(
+                    JBScrollPane(transcriptArea).apply {
+                        border = JBUI.Borders.empty()
+                        horizontalScrollBarPolicy = JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+                    },
+                    BorderLayout.CENTER,
+                )
                 add(statusLabel, BorderLayout.SOUTH)
             },
             BorderLayout.CENTER,

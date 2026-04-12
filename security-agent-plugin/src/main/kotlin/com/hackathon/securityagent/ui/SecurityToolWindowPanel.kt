@@ -4,8 +4,8 @@ import com.hackathon.securityagent.agents.KoogAgentRunner
 import com.hackathon.securityagent.agents.ReportGeneratorAgent
 import com.hackathon.securityagent.chat.FindingChatListener
 import com.hackathon.securityagent.chat.FindingChatService
-import com.hackathon.securityagent.report.SecurityReportGenerator
 import com.hackathon.securityagent.model.Finding
+import com.hackathon.securityagent.report.SecurityReportGenerator
 import com.hackathon.securityagent.services.ScanRequestResult
 import com.hackathon.securityagent.services.SecurityScanListener
 import com.hackathon.securityagent.services.SecurityScanService
@@ -13,26 +13,30 @@ import com.hackathon.securityagent.services.SecurityScanState
 import com.hackathon.securityagent.settings.SecurityAgentSettings
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.ui.JBColor
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.FlowLayout
+import java.awt.Font
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import javax.swing.Icon
+import javax.swing.JButton
 
 class SecurityToolWindowPanel(
     private val project: Project,
@@ -41,34 +45,78 @@ class SecurityToolWindowPanel(
     private val chatService = project.service<FindingChatService>()
     private val findingsTreePanel = FindingsTreePanel(project)
     private val detailPanel = FindingDetailPanel()
+    private val chatPanel = FindingChatPanel()
     private val overviewPanel = SecurityOverviewPanel()
     private val statusLabel = JBLabel()
-    private val rescanAction = RescanAction()
-    private val exportReportAction = ExportReportAction()
-    private val actionToolbar = ActionManager.getInstance().createActionToolbar(
-        "SecurityAgentToolWindow",
-        DefaultActionGroup(rescanAction, exportReportAction),
-        true,
+    private val scanButton = createToolbarButton(
+        text = "Scan",
+        icon = AllIcons.Actions.Refresh,
+        background = JBColor(Color(0xDBEAFE), Color(0x1E3A5F)),
+        foreground = JBColor(Color(0x1D4ED8), Color(0xBFDBFE)),
+        hoverBackground = JBColor(Color(0xBFDBFE), Color(0x2563EB)),
     )
+    private val reportButton = createToolbarButton(
+        text = "Create Report",
+        icon = AllIcons.Actions.MenuSaveall,
+        background = JBColor(Color(0xDCFCE7), Color(0x1F5132)),
+        foreground = JBColor(Color(0x166534), Color(0xBBF7D0)),
+        hoverBackground = JBColor(Color(0xBBF7D0), Color(0x166534)),
+    )
+    private val chatToggleButton = createToolbarButton(
+        text = "Open Chat",
+        icon = AllIcons.General.Balloon,
+        background = JBColor(Color(0xEDE9FE), Color(0x3B2B63)),
+        foreground = JBColor(Color(0x6D28D9), Color(0xDDD6FE)),
+        hoverBackground = JBColor(Color(0xDDD6FE), Color(0x4C1D95)),
+    ).apply {
+        isEnabled = false
+    }
+    private val chatDrawer = JBPanel<JBPanel<*>>(BorderLayout()).apply {
+        isVisible = false
+        preferredSize = Dimension(360, 0)
+        minimumSize = Dimension(300, 0)
+        border = JBUI.Borders.compound(
+            JBUI.Borders.customLineLeft(JBColor(Color(0xD7DDE5), Color(0x4B5563))),
+            JBUI.Borders.empty(10, 12, 10, 12),
+        )
+        add(chatPanel, BorderLayout.CENTER)
+    }
+    private var isChatOpen = false
 
     private var selectedFinding: Finding? = null
 
     init {
         border = JBUI.Borders.empty()
-        actionToolbar.targetComponent = this
         setToolbar(buildToolbar())
         setContent(buildContent())
 
-        detailPanel.onSendChatMessage = { finding, prompt ->
+        scanButton.addActionListener {
+            when (val result = scanService.requestProjectScan()) {
+                ScanRequestResult.Started -> Unit
+                is ScanRequestResult.Rejected -> showRejectedScanMessage(result)
+            }
+        }
+        reportButton.addActionListener {
+            exportReport()
+        }
+        chatToggleButton.addActionListener {
+            toggleChatDrawer()
+        }
+        chatPanel.onSendMessage = { finding, prompt ->
             chatService.sendMessage(finding, prompt)
         }
 
         findingsTreePanel.onFindingSelected = { finding ->
             selectedFinding = finding
             if (finding != null) {
-                detailPanel.showFinding(finding, chatService.threadFor(finding.id))
+                detailPanel.showFinding(finding)
+                chatPanel.showFinding(finding, chatService.threadFor(finding.id))
+                chatToggleButton.isEnabled = true
             } else {
                 detailPanel.showState(scanService.currentState())
+                chatPanel.showNoFinding()
+                chatToggleButton.isEnabled = false
+                setChatOpen(false)
             }
         }
 
@@ -85,7 +133,7 @@ class SecurityToolWindowPanel(
             FindingChatListener { thread ->
                 ApplicationManager.getApplication().invokeLater {
                     if (thread.findingId == selectedFinding?.id) {
-                        detailPanel.updateChatThread(thread)
+                        chatPanel.updateThread(thread)
                     }
                 }
             },
@@ -102,7 +150,14 @@ class SecurityToolWindowPanel(
                 JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
                 JBUI.Borders.empty(6, 8),
             )
-            add(actionToolbar.component, BorderLayout.WEST)
+            add(
+                JBPanel<JBPanel<*>>(FlowLayout(FlowLayout.LEFT, 8, 0)).apply {
+                    isOpaque = false
+                    add(scanButton)
+                    add(reportButton)
+                },
+                BorderLayout.WEST,
+            )
             add(statusLabel, BorderLayout.CENTER)
         }
 
@@ -112,10 +167,29 @@ class SecurityToolWindowPanel(
             add(
                 JBSplitter(false, 0.36f).apply {
                     firstComponent = findingsTreePanel
-                    secondComponent = detailPanel
+                    secondComponent = buildInspectorArea()
                     dividerWidth = 2
                 },
                 BorderLayout.CENTER,
+            )
+        }
+
+    private fun buildInspectorArea(): JBPanel<*> =
+        JBPanel<JBPanel<*>>(BorderLayout(0, 8)).apply {
+            add(
+                JBPanel<JBPanel<*>>(BorderLayout()).apply {
+                    add(detailPanel, BorderLayout.CENTER)
+                    add(chatDrawer, BorderLayout.EAST)
+                },
+                BorderLayout.CENTER,
+            )
+            add(
+                JBPanel<JBPanel<*>>(FlowLayout(FlowLayout.RIGHT, 0, 0)).apply {
+                    isOpaque = false
+                    border = JBUI.Borders.empty(0, 0, 8, 0)
+                    add(chatToggleButton)
+                },
+                BorderLayout.SOUTH,
             )
         }
 
@@ -135,13 +209,15 @@ class SecurityToolWindowPanel(
         when {
             keptSelection != null && findingsTreePanel.selectFinding(keptSelection) -> {
                 selectedFinding = keptSelection
-                detailPanel.showFinding(keptSelection, chatService.threadFor(keptSelection.id))
+                detailPanel.showFinding(keptSelection)
+                chatPanel.showFinding(keptSelection, chatService.threadFor(keptSelection.id))
             }
 
             state.findings.isNotEmpty() -> {
                 selectedFinding = findingsTreePanel.selectFirstFinding()
                 selectedFinding?.let { finding ->
-                    detailPanel.showFinding(finding, chatService.threadFor(finding.id))
+                    detailPanel.showFinding(finding)
+                    chatPanel.showFinding(finding, chatService.threadFor(finding.id))
                 }
             }
 
@@ -149,12 +225,16 @@ class SecurityToolWindowPanel(
                 selectedFinding = null
                 findingsTreePanel.clearSelection()
                 detailPanel.showState(state)
+                chatPanel.showNoFinding()
+                setChatOpen(false)
             }
         }
 
         overviewPanel.updateState(state)
         statusLabel.text = formatStatus(state)
-        actionToolbar.updateActionsImmediately()
+        scanButton.isEnabled = !state.isScanning && !state.isEnriching
+        reportButton.isEnabled = state.findings.isNotEmpty() && !state.isScanning
+        chatToggleButton.isEnabled = selectedFinding != null
     }
 
     private fun formatStatus(state: SecurityScanState): String =
@@ -256,41 +336,55 @@ class SecurityToolWindowPanel(
         )
     }.getOrNull()
 
-    private inner class RescanAction : DumbAwareAction("Rescan", "Run Semgrep again on the current project", AllIcons.Actions.Refresh) {
-        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-        override fun update(event: AnActionEvent) {
-            val currentState = scanService.currentState()
-            event.presentation.isEnabled = !currentState.isScanning && !currentState.isEnriching
+    private fun toggleChatDrawer() {
+        if (selectedFinding == null) {
+            return
         }
 
-        override fun actionPerformed(event: AnActionEvent) {
-            when (val result = scanService.requestProjectScan()) {
-                ScanRequestResult.Started -> Unit
-                is ScanRequestResult.Rejected -> showRejectedScanMessage(result)
-            }
-        }
+        setChatOpen(!isChatOpen)
     }
 
-    private inner class ExportReportAction : DumbAwareAction(
-        "Export report",
-        "Generate a Markdown and HTML security report for the current scan",
-        AllIcons.Actions.MenuSaveall,
-    ) {
-        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-        override fun update(event: AnActionEvent) {
-            val currentState = scanService.currentState()
-            event.presentation.isEnabled = currentState.findings.isNotEmpty() && !currentState.isScanning
-        }
-
-        override fun actionPerformed(event: AnActionEvent) {
-            exportReport()
-        }
+    private fun setChatOpen(open: Boolean) {
+        isChatOpen = open
+        chatDrawer.isVisible = open
+        chatToggleButton.text = if (open) "Close Chat" else "Open Chat"
+        revalidate()
+        repaint()
     }
 
     private companion object {
         private const val TITLE = "Security Agent"
         private val TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+
+        private fun createToolbarButton(
+            text: String,
+            icon: Icon,
+            background: JBColor,
+            foreground: JBColor,
+            hoverBackground: JBColor,
+        ): JButton =
+            JButton(text, icon).apply {
+                isFocusPainted = false
+                isOpaque = true
+                border = JBUI.Borders.empty(8, 12)
+                this.background = background
+                this.foreground = foreground
+                font = font.deriveFont(Font.BOLD, 12f)
+                horizontalTextPosition = JButton.RIGHT
+                iconTextGap = 6
+                addMouseListener(
+                    object : MouseAdapter() {
+                        override fun mouseEntered(event: MouseEvent) {
+                            if (isEnabled) {
+                                this@apply.background = hoverBackground
+                            }
+                        }
+
+                        override fun mouseExited(event: MouseEvent) {
+                            this@apply.background = background
+                        }
+                    },
+                )
+            }
     }
 }
